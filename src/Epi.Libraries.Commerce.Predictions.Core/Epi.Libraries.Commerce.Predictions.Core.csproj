@@ -150,6 +150,9 @@
     <Reference Include="Mediachase.WebConsoleLib, Version=13.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\EPiServer.Commerce.Core.13.1.0\lib\net461\Mediachase.WebConsoleLib.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Extensions.ObjectPool, Version=2.2.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.ObjectPool.2.2.0\lib\netstandard2.0\Microsoft.Extensions.ObjectPool.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.ML.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.ML.1.1.0\lib\netstandard2.0\Microsoft.ML.Core.dll</HintPath>
     </Reference>
@@ -267,6 +270,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CreatePredictionsScheduledJob.cs" />
+    <Compile Include="Engine\MLModelEngine.cs" />
+    <Compile Include="Engine\PooledPredictionEnginePolicy.cs" />
     <Compile Include="IPredictionEngineService.cs" />
     <Compile Include="IPredictionStorageService.cs" />
     <Compile Include="IRecommendationRepository.cs" />

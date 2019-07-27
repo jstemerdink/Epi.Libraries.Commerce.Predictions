@@ -24,11 +24,14 @@
 namespace Epi.Libraries.Commerce.Predictions.Core
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
+    using System.Threading.Tasks;
 
     using Epi.Libraries.Commerce.Predictions.Core.Models;
+    using Epi.Libraries.Commerce.Predictions.Engine;
 
     using EPiServer;
     using EPiServer.Commerce.Catalog.ContentTypes;
@@ -87,7 +90,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <summary>
         /// The prediction engine
         /// </summary>
-        private PredictionEngine<ProductEntry, CoPurchasePrediction> predictionEngine;
+        private MlModelEngine<ProductEntry, CoPurchasePrediction> predictionEngine;
 
         /// <summary><c>true</c> when this scheduled job has been stopped; <c>false</c> when not.</summary>
         private bool stopSignaled;
@@ -119,6 +122,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// Called when a scheduled job executes
         /// </summary>
         /// <returns>A status message to be stored in the database log and visible from admin mode</returns>
+        /// <exception cref="T:System.AggregateException">The exception that contains all the individual exceptions thrown on all threads.</exception>
         public override string Execute()
         {
             this.OnStatusChanged("Starting to update/train the model");
@@ -126,13 +130,11 @@ namespace Epi.Libraries.Commerce.Predictions.Core
             List<ProductEntry> products = this.GetProductEntries();
             ITransformer transformer = this.LoadDataAndTrain(products: products);
 
-            this.predictionEngine =
-                this.mlContext.Model.CreatePredictionEngine<ProductEntry, CoPurchasePrediction>(
-                    transformer: transformer);
+            this.predictionEngine = new MlModelEngine<ProductEntry, CoPurchasePrediction>(transformer: transformer);
 
             this.OnStatusChanged("Prediction model has been updated and trained");
 
-            List<IProductCoPurchasePrediction> predictions = new List<IProductCoPurchasePrediction>();
+            ConcurrentBag<IProductCoPurchasePrediction> predictions = new ConcurrentBag<IProductCoPurchasePrediction>();
 
             List<int> productIds = this.GetAllVariantIds().ToList();
 
@@ -147,22 +149,19 @@ namespace Epi.Libraries.Commerce.Predictions.Core
 
                 List<int> coPurchaseProductIds = productIds.Where(id => id != productId).ToList();
 
-                foreach (int coPurchaseProductId in coPurchaseProductIds)
-                {
-                    if (this.stopSignaled)
-                    {
-                        break;
-                    }
+                Parallel.ForEach(
+                    source: coPurchaseProductIds,
+                    coPurchaseProductId =>
+                        {
+                            IProductCoPurchasePrediction productCoPurchasePrediction = this.GetPrediction(
+                                productId: productId,
+                                coPurchaseProductId: coPurchaseProductId);
 
-                    IProductCoPurchasePrediction productCoPurchasePrediction = this.GetPrediction(
-                        productId: productId,
-                        coPurchaseProductId: coPurchaseProductId);
-
-                    if (productCoPurchasePrediction != null)
-                    {
-                        predictions.Add(item: productCoPurchasePrediction);
-                    }
-                }
+                            if (productCoPurchasePrediction != null)
+                            {
+                                predictions.Add(item: productCoPurchasePrediction);
+                            }
+                        });
             }
 
             try
