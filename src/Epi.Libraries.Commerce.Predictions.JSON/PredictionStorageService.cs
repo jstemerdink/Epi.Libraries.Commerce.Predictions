@@ -27,13 +27,12 @@ namespace Epi.Libraries.Commerce.Predictions.JSON
     using System.Collections.Generic;
     using System.IO;
     using System.Threading;
-    using System.Web;
 
     using Epi.Libraries.Commerce.Predictions.Core.Models;
     using Epi.Libraries.Commerce.Predictions.JSON.Models;
 
+    using EPiServer.Framework.Internal;
     using EPiServer.Logging;
-    using EPiServer.ServiceLocation;
 
     using Newtonsoft.Json;
 
@@ -58,16 +57,14 @@ namespace Epi.Libraries.Commerce.Predictions.JSON
         private bool disposed;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PredictionStorageService"/> class.
+        /// Initializes a new instance of the <see cref="PredictionStorageService" /> class.
         /// </summary>
-        /// <param name="httpContextAccessor">The HTTP context accessor.</param>
-        public PredictionStorageService(ServiceAccessor<HttpContextBase> httpContextAccessor)
+        /// <param name="physicalPathResolver">The physical path resolver.</param>
+        public PredictionStorageService(IPhysicalPathResolver physicalPathResolver)
         {
             try
             {
-                HttpContextBase httpContext = httpContextAccessor();
-
-                this.jsonPath = httpContext.Server.MapPath("~/App_Data/all_recommendations.json");
+                this.jsonPath = physicalPathResolver.Rebase(@"[appDataPath]\all_recommendations.json");
             }
             catch (Exception exception)
             {
