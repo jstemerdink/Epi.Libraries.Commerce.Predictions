@@ -190,5 +190,12 @@ namespace Epi.Libraries.Commerce.Predictions.DDS
 
             return combinedRecommendations;
         }
+
+        /// <summary>
+        /// Initializes this instance.
+        /// </summary>
+        public void Initialize()
+        {
+        }
     }
 }

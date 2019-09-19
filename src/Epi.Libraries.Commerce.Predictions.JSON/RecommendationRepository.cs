@@ -146,5 +146,12 @@ namespace Epi.Libraries.Commerce.Predictions.JSON
 
             return combinedRecommendations;
         }
+
+        /// <summary>
+        /// Initializes this instance.
+        /// </summary>
+        public void Initialize()
+        {
+        }
     }
 }

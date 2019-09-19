@@ -63,5 +63,10 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <param name="productIds">The product ids.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="IProductCoPurchasePrediction"/>.</returns>
         IEnumerable<IProductCoPurchasePrediction> Get(IEnumerable<int> productIds);
+
+        /// <summary>
+        /// Initializes this instance.
+        /// </summary>
+        void Initialize();
     }
 }

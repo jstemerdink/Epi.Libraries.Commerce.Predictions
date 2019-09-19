@@ -191,6 +191,13 @@ namespace Epi.Libraries.Commerce.Predictions.EF
         }
 
         /// <summary>
+        /// Initializes this instance.
+        /// </summary>
+        public void Initialize()
+        {
+        }
+
+        /// <summary>
         /// Gets all predictions form the DB.
         /// </summary>
         /// <returns>A <see cref="DbSet{TEntity}"/> of <see cref="ProductCoPurchasePrediction"/>.</returns>
