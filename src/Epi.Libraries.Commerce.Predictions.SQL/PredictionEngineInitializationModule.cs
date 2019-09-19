@@ -48,7 +48,7 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
         {
             IServiceConfigurationProvider services = context.Services;
 
-            services.AddTransient<IRecommendationRepository, RecommendationRepository>();
+            services.AddSingleton<IRecommendationRepository, RecommendationRepository>();
         }
 
         /// <summary>Initializes the <see cref="IPredictionEngineService"/></summary>

@@ -30,8 +30,6 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
     using System.IO;
     using System.Linq;
 
-    using Castle.Core.Logging;
-
     using Epi.Libraries.Commerce.Predictions.Core;
     using Epi.Libraries.Commerce.Predictions.Core.Models;
     using Epi.Libraries.Commerce.Predictions.SQL.Models;
@@ -65,10 +63,6 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
             this.databaseExecutor = databaseExecutor;
         }
 
-        ////public RecommendationRepository()
-        ////{
-        ////}
-
         /// <summary>
         /// Gets the predictions.
         /// </summary>
@@ -95,13 +89,20 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
             foreach (IProductCoPurchasePrediction productCoPurchasePrediction in productCoPurchasePredictions
                 .Cast<ProductCoPurchasePrediction>())
             {
-                this.ExecuteNonQuery(
-                    () => this.CreateCommand(
-                        sqlCommand: sqlCommand,
-                        this.CreateIntParameter("productId", value: productCoPurchasePrediction.ProductId),
-                        this.CreateIntParameter("coPurchaseProductId", value: productCoPurchasePrediction.CoPurchaseProductId),
-                        this.CreateFloatParameter("score", value: productCoPurchasePrediction.Score)),
-                    "An error occurred while updating or creating a prediction.");
+                try
+                {
+                    this.ExecuteNonQuery(
+                        () => this.CreateCommand(
+                            sqlCommand: sqlCommand,
+                            this.CreateIntParameter("productId", value: productCoPurchasePrediction.ProductId),
+                            this.CreateIntParameter("coPurchaseProductId", value: productCoPurchasePrediction.CoPurchaseProductId),
+                            this.CreateFloatParameter("score", value: productCoPurchasePrediction.Score)),
+                        "An error occurred while updating or creating a prediction.");
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"[Prediction Engine] {e.Message} for product with ID '{productCoPurchasePrediction.ProductId}' and co-purchase ID '{productCoPurchasePrediction.CoPurchaseProductId}' ", e);
+                }
             }
 
             this.predictions = null;
@@ -142,7 +143,6 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
 
         public void StoreModel()
         {
-
         }
 
         public Stream LoadModel()
@@ -158,8 +158,9 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
         public virtual IEnumerable<IProductCoPurchasePrediction> Get(int productId)
         {
             string sqlCommand =
-                $@"SELECT [ProductId], [CoPurchaseProductId], [Score] FROM {PredictionsTable} WHERE ProductId = {productId}";
-            return this.ExecuteQuery(() => this.CreateCommand(sqlCommand: sqlCommand));
+                $@"SELECT [ProductId], [CoPurchaseProductId], [Score] FROM {PredictionsTable} WHERE ProductId = @productId";
+
+            return this.ExecuteQuery(() => this.CreateCommand(sqlCommand: sqlCommand, this.CreateIntParameter("productId", value: productId)));
         }
 
         /// <summary>
@@ -211,17 +212,6 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
             };
         }
 
-        private DbParameter CreateBoolParameter(string name, bool value)
-        {
-            IDatabaseExecutor db = this.databaseExecutor();
-
-            return db.CreateParameter(
-                name: name,
-                type: DbType.Boolean,
-                direction: ParameterDirection.Input,
-                value: value);
-        }
-
         private DbCommand CreateCommand(string sqlCommand, params DbParameter[] parameters)
         {
             IDatabaseExecutor db = this.databaseExecutor();
@@ -268,7 +258,7 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
 
             if (adapter == null)
             {
-                throw new Exception("Unable to create DbDataAdapter");
+                throw new Exception("[Prediction Engine] Unable to create DbDataAdapter");
             }
 
             adapter.SelectCommand = command;
@@ -316,7 +306,7 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
                     }
                     catch (Exception ex)
                     {
-                        Logger.Error("An error occurred while retrieving predictions.", exception: ex);
+                        Logger.Error("[Prediction Engine] An error occurred while retrieving predictions.", exception: ex);
                         throw;
                     }
                 });
