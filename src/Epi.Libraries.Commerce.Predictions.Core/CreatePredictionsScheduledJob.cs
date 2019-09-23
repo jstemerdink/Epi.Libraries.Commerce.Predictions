@@ -293,21 +293,13 @@ namespace Epi.Libraries.Commerce.Predictions.Core
                     continue;
                 }
 
-                List<int> productIdList = lineItems.Select(lineItem => lineItem.GetEntryContent())
-                    .Select(entry => entry.ContentLink.ID).ToList();
+                List<int> productIdList = (from lineItem in lineItems select lineItem.GetEntryContent() into content where content != null select content.ContentLink.ID).ToList();
 
                 foreach (int productId in productIdList)
                 {
                     List<int> coPurchaseProductIds = productIdList.Where(id => id != productId).ToList();
 
-                    foreach (int coPurchaseProductId in coPurchaseProductIds)
-                    {
-                        products.Add(
-                            new ProductEntry
-                                {
-                                    ProductId = (uint)productId, CoPurchaseProductId = (uint)coPurchaseProductId
-                                });
-                    }
+                    products.AddRange(coPurchaseProductIds.Select(coPurchaseProductId => new ProductEntry { ProductId = (uint)productId, CoPurchaseProductId = (uint)coPurchaseProductId }));
                 }
             }
 

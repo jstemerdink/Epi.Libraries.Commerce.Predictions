@@ -66,16 +66,6 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
         }
 
         /// <summary>
-        /// Initializes the complete handler.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void InitCompleteHandler(object sender, EventArgs e)
-        {
-            recommendationRepository.Initialize();
-        }
-
-        /// <summary>
         /// Resets the module into an uninitialized state.
         /// </summary>
         /// <param name="context">The context.</param>
@@ -89,6 +79,16 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
         /// </para></remarks>
         public void Uninitialize(InitializationEngine context)
         {
+        }
+
+        /// <summary>
+        /// Initializes the complete handler.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        private static void InitCompleteHandler(object sender, EventArgs e)
+        {
+            recommendationRepository.Initialize();
         }
     }
 }

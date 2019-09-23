@@ -25,9 +25,6 @@ namespace Epi.Libraries.Commerce.Predictions.SQL.Models
 {
     using Epi.Libraries.Commerce.Predictions.Core.Models;
 
-    using EPiServer.Data;
-    using EPiServer.Data.Dynamic;
-
     /// <summary>
     /// Class ProductCoPurchasePrediction.
     /// </summary>

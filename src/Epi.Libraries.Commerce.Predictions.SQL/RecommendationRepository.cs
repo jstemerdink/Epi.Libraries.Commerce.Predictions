@@ -35,6 +35,7 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
     using Epi.Libraries.Commerce.Predictions.SQL.Models;
 
     using EPiServer.Data;
+    using EPiServer.Framework.Cache;
     using EPiServer.Logging;
     using EPiServer.ServiceLocation;
 
@@ -49,18 +50,23 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
     {
         private const string PredictionsTable = "[dbo].[tblProductCoPurchasePredictions]";
 
+        private const string PredictionsCacheKey = "ProductCoPurchasePredictions";
+
         private static readonly ILogger Logger = LogManager.GetLogger();
 
         private readonly ServiceAccessor<IDatabaseExecutor> databaseExecutor;
 
-        /// <summary>
-        /// The productCoPurchasePredictions
-        /// </summary>
-        private IEnumerable<ProductCoPurchasePrediction> predictions;
+        private readonly ISynchronizedObjectInstanceCache synchronizedObjectInstanceCache;
 
-        public RecommendationRepository(ServiceAccessor<IDatabaseExecutor> databaseExecutor)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RecommendationRepository"/> class.
+        /// </summary>
+        /// <param name="databaseExecutor">The database executor.</param>
+        /// <param name="synchronizedObjectInstanceCache">The synchronized object instance cache.</param>
+        public RecommendationRepository(ServiceAccessor<IDatabaseExecutor> databaseExecutor, ISynchronizedObjectInstanceCache synchronizedObjectInstanceCache)
         {
             this.databaseExecutor = databaseExecutor;
+            this.synchronizedObjectInstanceCache = synchronizedObjectInstanceCache;
         }
 
         /// <summary>
@@ -71,7 +77,19 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
         {
             get
             {
-                return this.predictions ?? (this.predictions = this.GetAll());
+                IEnumerable<ProductCoPurchasePrediction> productCoPurchasePredictions =
+                    this.synchronizedObjectInstanceCache.Get(PredictionsCacheKey) as IEnumerable<ProductCoPurchasePrediction>;
+
+                if (productCoPurchasePredictions != null)
+                {
+                    return productCoPurchasePredictions;
+                }
+
+                productCoPurchasePredictions = this.GetAll();
+
+                this.synchronizedObjectInstanceCache.Insert(key: PredictionsCacheKey, value: productCoPurchasePredictions, evictionPolicy: CacheEvictionPolicy.Empty);
+
+                return productCoPurchasePredictions;
             }
         }
 
@@ -81,23 +99,12 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
         /// <param name="productCoPurchasePredictions">The productCoPurchasePredictions.</param>
         public virtual void AddOrUpdate(IEnumerable<IProductCoPurchasePrediction> productCoPurchasePredictions)
         {
-            string sqlCommand =
-                $@"UPDATE {PredictionsTable} SET [Score] =  @score WHERE [ProductId] = @productId AND [CoPurchaseProductId] = @coPurchaseProductId
-                   IF @@ROWCOUNT = 0
-                   INSERT INTO {PredictionsTable} ([ProductId], [CoPurchaseProductId], [Score]) VALUES (@productId, @coPurchaseProductId, @score)";
-
             foreach (IProductCoPurchasePrediction productCoPurchasePrediction in productCoPurchasePredictions
-                .Cast<ProductCoPurchasePrediction>())
+                 .Cast<ProductCoPurchasePrediction>())
             {
                 try
                 {
-                    this.ExecuteNonQuery(
-                        () => this.CreateCommand(
-                            sqlCommand: sqlCommand,
-                            this.CreateIntParameter("productId", value: productCoPurchasePrediction.ProductId),
-                            this.CreateIntParameter("coPurchaseProductId", value: productCoPurchasePrediction.CoPurchaseProductId),
-                            this.CreateFloatParameter("score", value: productCoPurchasePrediction.Score)),
-                        "An error occurred while updating or creating a prediction.");
+                    this.AddOrUpdate(productCoPurchasePrediction);
                 }
                 catch (Exception e)
                 {
@@ -105,7 +112,27 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
                 }
             }
 
-            this.predictions = null;
+            this.synchronizedObjectInstanceCache.Remove(key: PredictionsCacheKey);
+        }
+
+        /// <summary>
+        /// Adds or updates <see cref="IProductCoPurchasePrediction" /> in the repository.
+        /// </summary>
+        /// <param name="productCoPurchasePrediction">The ProductCoPurchasePrediction.</param>
+        public virtual void AddOrUpdate(IProductCoPurchasePrediction productCoPurchasePrediction)
+        {
+            string sqlCommand =
+                $@"UPDATE {PredictionsTable} SET [Score] =  @score WHERE [ProductId] = @productId AND [CoPurchaseProductId] = @coPurchaseProductId
+                   IF @@ROWCOUNT = 0
+                   INSERT INTO {PredictionsTable} ([ProductId], [CoPurchaseProductId], [Score]) VALUES (@productId, @coPurchaseProductId, @score)";
+
+            this.ExecuteNonQuery(
+                () => this.CreateCommand(
+                    sqlCommand: sqlCommand,
+                    this.CreateIntParameter("productId", value: productCoPurchasePrediction.ProductId),
+                    this.CreateIntParameter("coPurchaseProductId", value: productCoPurchasePrediction.CoPurchaseProductId),
+                    this.CreateFloatParameter("score", value: productCoPurchasePrediction.Score)),
+                "An error occurred while updating or creating a prediction.");
         }
 
         /// <summary>
@@ -138,7 +165,19 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
                 () => this.CreateCommand(sqlCommand: sqlCommand, this.CreateIntParameter("id", value: productId)),
                 "An error occurred while deleting predictions.");
 
-            this.predictions = null;
+            this.synchronizedObjectInstanceCache.Remove(key: PredictionsCacheKey);
+        }
+
+        public virtual void DeleteAll()
+        {
+            string sqlCommand =
+                $@"TRUNCATE TABLE {PredictionsTable}";
+
+            this.ExecuteNonQuery(
+                () => this.CreateCommand(sqlCommand: sqlCommand),
+                "An error occurred while deleting predictions.");
+
+            this.synchronizedObjectInstanceCache.Remove(key: PredictionsCacheKey);
         }
 
         public void StoreModel()
@@ -210,6 +249,17 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
                 CoPurchaseProductId = x.Field<int>("CoPurchaseProductId"),
                 Score = x.Field<float>("Score")
             };
+        }
+
+        private DbParameter CreateBoolParameter(string name, bool value)
+        {
+            IDatabaseExecutor db = this.databaseExecutor();
+
+            return db.CreateParameter(
+                name: name,
+                type: DbType.Boolean,
+                direction: ParameterDirection.Input,
+                value: value);
         }
 
         private DbCommand CreateCommand(string sqlCommand, params DbParameter[] parameters)
