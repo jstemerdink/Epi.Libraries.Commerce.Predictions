@@ -69,6 +69,11 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <exception cref="T:EPiServer.ServiceLocation.ActivationException">if there is are errors resolving the service instance.</exception>
         public void Initialize(InitializationEngine context)
         {
+            if ((context == null) || (context.HostType != HostType.WebApplication))
+            {
+                return;
+            }
+
             if (initialized)
             {
                 return;

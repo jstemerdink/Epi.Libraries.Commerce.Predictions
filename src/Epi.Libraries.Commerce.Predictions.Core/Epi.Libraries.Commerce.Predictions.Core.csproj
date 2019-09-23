@@ -274,7 +274,6 @@
     <Compile Include="Engine\MLModelEngine.cs" />
     <Compile Include="Engine\PooledPredictionEnginePolicy.cs" />
     <Compile Include="IPredictionEngineService.cs" />
-    <Compile Include="IPredictionStorageService.cs" />
     <Compile Include="IRecommendationRepository.cs" />
     <Compile Include="Models\CoPurchasePrediction.cs" />
     <Compile Include="Models\IProductCoPurchasePrediction.cs" />

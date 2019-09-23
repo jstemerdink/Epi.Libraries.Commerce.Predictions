@@ -36,6 +36,12 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         void AddOrUpdate(IEnumerable<IProductCoPurchasePrediction> predictions);
 
         /// <summary>
+        /// Adds or updates a <see cref="IProductCoPurchasePrediction"/> in the repository.
+        /// </summary>
+        /// <param name="productCoPurchasePrediction">The product co purchase prediction.</param>
+        void AddOrUpdate(IProductCoPurchasePrediction productCoPurchasePrediction);
+
+        /// <summary>
         /// Creates a new prediction.
         /// </summary>
         /// <param name="productId">The product identifier.</param>
@@ -51,6 +57,11 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         void Delete(int productId);
 
         /// <summary>
+        /// Deletes all <see cref="IProductCoPurchasePrediction" />.
+        /// </summary>
+        void DeleteAll();
+
+        /// <summary>
         /// Gets all <see cref="IProductCoPurchasePrediction"/> with the specified <param name="productId"></param>.
         /// </summary>
         /// <param name="productId">The product identifier.</param>
@@ -58,11 +69,25 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         IEnumerable<IProductCoPurchasePrediction> Get(int productId);
 
         /// <summary>
+        /// Gets all <see cref="IProductCoPurchasePrediction"/> with the specified <param name="productId"> from the cache</param>.
+        /// </summary>
+        /// <param name="productId">The product identifier.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="IProductCoPurchasePrediction"/>.</returns>
+        IEnumerable<IProductCoPurchasePrediction> GetFromCache(int productId);
+
+        /// <summary>
         /// Gets the combined <see cref="IProductCoPurchasePrediction"/> for the specified <param name="productIds"></param>.
         /// </summary>
         /// <param name="productIds">The product ids.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="IProductCoPurchasePrediction"/>.</returns>
         IEnumerable<IProductCoPurchasePrediction> Get(IEnumerable<int> productIds);
+
+        /// <summary>
+        /// Gets the combined <see cref="IProductCoPurchasePrediction"/> for the specified <param name="productIds"> from the cache</param>.
+        /// </summary>
+        /// <param name="productIds">The product ids.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="IProductCoPurchasePrediction"/>.</returns>
+        IEnumerable<IProductCoPurchasePrediction> GetFromCache(IEnumerable<int> productIds);
 
         /// <summary>
         /// Initializes this instance.

@@ -141,7 +141,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
 
             if (!this.TryDeserialize(eventNotificationEventArgs: e, deserializedEventArgs: out deserializedEventArgs))
             {
-                Log.Debug("[Prediction Engine] Failed to deserialize CatalogEventUpdated event args.");
+                Log.Error("[Prediction Engine] Failed to deserialize CatalogEventUpdated event args.");
             }
             else
             {

@@ -27,7 +27,6 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
     using System.Collections.Generic;
     using System.Data;
     using System.Data.Common;
-    using System.IO;
     using System.Linq;
 
     using Epi.Libraries.Commerce.Predictions.Core;
@@ -180,15 +179,6 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
             this.synchronizedObjectInstanceCache.Remove(key: PredictionsCacheKey);
         }
 
-        public void StoreModel()
-        {
-        }
-
-        public Stream LoadModel()
-        {
-            return Stream.Null;
-        }
-
         /// <summary>
         /// Gets all <see cref="ProductCoPurchasePrediction"/> with the specified <param name="productId"></param>.
         /// </summary>
@@ -203,6 +193,17 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
         }
 
         /// <summary>
+        /// Gets all <see cref="ProductCoPurchasePrediction"/> with the specified <param name="productId"> from the cache</param>.
+        /// </summary>
+        /// <param name="productId">The product identifier.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="ProductCoPurchasePrediction"/>.</returns>
+        public virtual IEnumerable<IProductCoPurchasePrediction> GetFromCache(int productId)
+        {
+
+            return this.Predictions.Where(prediction => prediction.ProductId == productId);
+        }
+
+        /// <summary>
         /// Gets the combined <see cref="ProductCoPurchasePrediction" /> for the specified <param name="productIds"></param>.
         /// </summary>
         /// <param name="productIds">The product ids.</param>
@@ -214,6 +215,23 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
             foreach (int id in productIds)
             {
                 combinedRecommendations.AddRange(this.Get(productId: id));
+            }
+
+            return combinedRecommendations;
+        }
+
+        /// <summary>
+        /// Gets the combined <see cref="ProductCoPurchasePrediction" /> for the specified <param name="productIds"> from the cache</param>.
+        /// </summary>
+        /// <param name="productIds">The product ids.</param>
+        /// <returns>An <see cref="IEnumerable{T}" /> of <see cref="ProductCoPurchasePrediction" />.</returns>
+        public IEnumerable<IProductCoPurchasePrediction> GetFromCache(IEnumerable<int> productIds)
+        {
+            List<IProductCoPurchasePrediction> combinedRecommendations = new List<IProductCoPurchasePrediction>();
+
+            foreach (int id in productIds)
+            {
+                combinedRecommendations.AddRange(this.GetFromCache(productId: id));
             }
 
             return combinedRecommendations;
@@ -249,17 +267,6 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
                 CoPurchaseProductId = x.Field<int>("CoPurchaseProductId"),
                 Score = x.Field<float>("Score")
             };
-        }
-
-        private DbParameter CreateBoolParameter(string name, bool value)
-        {
-            IDatabaseExecutor db = this.databaseExecutor();
-
-            return db.CreateParameter(
-                name: name,
-                type: DbType.Boolean,
-                direction: ParameterDirection.Input,
-                value: value);
         }
 
         private DbCommand CreateCommand(string sqlCommand, params DbParameter[] parameters)

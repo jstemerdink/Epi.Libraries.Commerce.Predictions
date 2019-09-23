@@ -216,7 +216,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\ProductCoPurchasePrediction.cs" />
-    <Compile Include="PredictionEngineInitializationModule.cs" />
+    <Compile Include="RecommendationRepositoryInitializationModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RecommendationRepository.cs" />
   </ItemGroup>

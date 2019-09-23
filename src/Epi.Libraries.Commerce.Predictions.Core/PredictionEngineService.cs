@@ -44,11 +44,6 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         private readonly IAssociationRepository associationRepository;
 
         /// <summary>
-        /// The <see cref="ILogger"/> instance
-        /// </summary>
-        private readonly ILogger log = LogManager.GetLogger();
-
-        /// <summary>
         /// The co purchase prediction repository
         /// </summary>
         private readonly IRecommendationRepository recommendationRepository;
@@ -84,7 +79,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <returns>A list of <see cref="ContentReference"/> with recommendations for a variation.</returns>
         public IEnumerable<ContentReference> GetRecommendations(ContentReference contentReference, int amount)
         {
-            return this.recommendationRepository.Get(productId: contentReference.ID).OrderByDescending(p => p.Score)
+            return this.recommendationRepository.GetFromCache(productId: contentReference.ID).OrderByDescending(p => p.Score)
                 .Take(count: amount).Select(p => new ContentReference(contentID: p.CoPurchaseProductId));
         }
 
@@ -106,7 +101,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <returns>A list of <see cref="ContentReference" /> with recommendations for list of variations.</returns>
         public IEnumerable<ContentReference> GetRecommendations(ICart cart, int amount)
         {
-            IEnumerable<ContentReference> contentReferences = this.GetContentReferences(cart: cart);
+            IEnumerable<ContentReference> contentReferences = GetContentReferences(cart: cart);
             return this.GetRecommendations(contentReferences: contentReferences, amount: amount);
         }
 
@@ -117,7 +112,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <returns>A list of <see cref="ContentReference" /> with recommendations for list of variations.</returns>
         public IEnumerable<ContentReference> GetRecommendations(ICart cart)
         {
-            IEnumerable<ContentReference> contentReferences = this.GetContentReferences(cart: cart);
+            IEnumerable<ContentReference> contentReferences = GetContentReferences(cart: cart);
             return this.GetRecommendations(contentReferences: contentReferences, 3);
         }
 
@@ -132,7 +127,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
             int amount)
         {
             List<IProductCoPurchasePrediction> combinedRecommendations =
-                this.recommendationRepository.Get(contentReferences.Select(r => r.ID)).ToList();
+                this.recommendationRepository.GetFromCache(contentReferences.Select(r => r.ID)).ToList();
 
             return combinedRecommendations.OrderByDescending(p => p.Score).Take(count: amount)
                 .Select(p => new ContentReference(contentID: p.CoPurchaseProductId));
@@ -156,7 +151,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <returns>A list of <see cref="ContentReference"/> with the best scoring up-sell items.</returns>
         public List<ContentReference> GetUpSellItems(ICart cart, int amount)
         {
-            IEnumerable<ContentReference> contentReferences = this.GetContentReferences(cart: cart);
+            IEnumerable<ContentReference> contentReferences = GetContentReferences(cart: cart);
 
             List<ContentReference> upsellItems = new List<ContentReference>();
 
@@ -168,7 +163,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
             }
 
             List<IProductCoPurchasePrediction> combinedRecommendations =
-                this.recommendationRepository.Get(upsellItems.Select(r => r.ID)).ToList();
+                this.recommendationRepository.GetFromCache(upsellItems.Select(r => r.ID)).ToList();
 
             return combinedRecommendations.OrderByDescending(i => i.Score).Take(count: amount)
                 .Select(p => new ContentReference(contentID: p.CoPurchaseProductId)).ToList();
@@ -186,7 +181,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// </summary>
         /// <param name="cart">The cart.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> of <see cref="ContentReference"/>.</returns>
-        private IEnumerable<ContentReference> GetContentReferences(ICart cart)
+        private static IEnumerable<ContentReference> GetContentReferences(ICart cart)
         {
             IEnumerable<ILineItem> lineItems = cart.GetFirstForm().GetAllLineItems();
 

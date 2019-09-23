@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="PredictionEngineInitializationModule.cs" company="Jeroen Stemerdink">
+// <copyright file="RecommendationRepositoryInitializationModule.cs" company="Jeroen Stemerdink">
 //      Copyright © 2019 Jeroen Stemerdink.
 //      Permission is hereby granted, free of charge, to any person obtaining a copy
 //      of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ namespace Epi.Libraries.Commerce.Predictions.SQL
     /// <seealso cref="EPiServer.ServiceLocation.IConfigurableModule" />
     [InitializableModule]
     [ModuleDependency(typeof(EPiServer.Commerce.Initialization.InitializationModule))]
-    public class PredictionEngineInitializationModule : IConfigurableModule
+    public class RecommendationRepositoryInitializationModule : IConfigurableModule
     {
         private static IRecommendationRepository recommendationRepository;
 
