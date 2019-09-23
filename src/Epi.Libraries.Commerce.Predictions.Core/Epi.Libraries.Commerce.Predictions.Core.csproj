@@ -269,6 +269,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CatalogContentEventListener.cs" />
     <Compile Include="CreatePredictionsScheduledJob.cs" />
     <Compile Include="Engine\MLModelEngine.cs" />
     <Compile Include="Engine\PooledPredictionEnginePolicy.cs" />
