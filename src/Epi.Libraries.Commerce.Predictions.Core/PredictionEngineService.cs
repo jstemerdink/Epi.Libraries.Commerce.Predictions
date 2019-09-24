@@ -140,17 +140,21 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         {
             int currentProductId = this.referenceConverter.GetObjectId(contentLink: contentReference);
 
-            // Initialize with the current product
-            List<int> productIdList = new List<int> { currentProductId };
+            IEnumerable<IProductCoPurchasePrediction> productRecommendations =
+                this.recommendationRepository.Get(productId: currentProductId)
+                    .OrderByDescending(p => p.Score);
 
-            productIdList.AddRange(this.GetPersonalProductIds());
+            List<int> productIdList = this.GetPersonalProductIds().ToList();
 
-            IEnumerable<IProductCoPurchasePrediction> filteredRecommendations = this.recommendationRepository
+            IEnumerable<IProductCoPurchasePrediction> personalRecommendations = this.recommendationRepository
                 .Get(productIds: productIdList).Where(
                     productCoPurchasePrediction =>
                         !productIdList.Contains(item: productCoPurchasePrediction.CoPurchaseProductId));
 
-            return filteredRecommendations.OrderByDescending(p => p.Score).Take(count: amount).Select(
+            IEnumerable<IProductCoPurchasePrediction> joinedRecommendations =
+                productRecommendations.Concat(personalRecommendations);
+
+            return joinedRecommendations.OrderByDescending(p => p.Score).Take(count: amount).Select(
                 p => this.referenceConverter.GetEntryContentLink(objectId: p.CoPurchaseProductId));
         }
 
@@ -445,6 +449,10 @@ namespace Epi.Libraries.Commerce.Predictions.Core
             return associations;
         }
 
+        /// <summary>
+        /// Gets the personal product ids for the user.
+        /// </summary>
+        /// <returns>A list of object ids.</returns>
         private IEnumerable<int> GetPersonalProductIds()
         {
             List<int> productIdList = new List<int>();
@@ -469,6 +477,11 @@ namespace Epi.Libraries.Commerce.Predictions.Core
             return productIdList.Distinct();
         }
 
+        /// <summary>
+        /// Gets the line item ids.
+        /// </summary>
+        /// <param name="orderGroups">The order groups.</param>
+        /// <returns>A list of object ids for all line-items in the <param name="orderGroups"></param>.</returns>
         private IEnumerable<int> GetLineItemIds(IEnumerable<IOrderGroup> orderGroups)
         {
             List<int> idList = new List<int>();
