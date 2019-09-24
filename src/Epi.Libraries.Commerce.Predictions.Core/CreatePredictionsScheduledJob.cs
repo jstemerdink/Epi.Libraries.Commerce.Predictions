@@ -216,7 +216,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
                         break;
                     }
 
-                    variantIdList.Add(item: variant.ContentLink.ID);
+                    variantIdList.Add(item: this.referenceConverter.GetObjectId(variant.ContentLink));
                 }
             }
 
@@ -293,7 +293,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
                     continue;
                 }
 
-                List<int> productIdList = (from lineItem in lineItems select lineItem.GetEntryContent() into content where content != null select content.ContentLink.ID).ToList();
+                List<int> productIdList = (from lineItem in lineItems select lineItem.GetEntryContent() into content where content != null select this.referenceConverter.GetObjectId(content.ContentLink)).ToList();
 
                 foreach (int productId in productIdList)
                 {

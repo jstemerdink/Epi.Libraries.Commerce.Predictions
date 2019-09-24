@@ -31,7 +31,8 @@ namespace Epi.Libraries.Commerce.Predictions.Core
     using EPiServer.Commerce.Catalog.Linking;
     using EPiServer.Commerce.Order;
     using EPiServer.Core;
-    using EPiServer.Logging;
+
+    using Mediachase.Commerce.Catalog;
 
     /// <summary>
     /// Class PredictionEngineService.
@@ -49,16 +50,24 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         private readonly IRecommendationRepository recommendationRepository;
 
         /// <summary>
+        /// The reference converter
+        /// </summary>
+        private readonly ReferenceConverter referenceConverter;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="PredictionEngineService" /> class.
         /// </summary>
         /// <param name="associationRepository">The association repository.</param>
         /// <param name="recommendationRepository">The recommendation repository.</param>
+        /// <param name="referenceConverter">The reference converter.</param>
         public PredictionEngineService(
             IAssociationRepository associationRepository,
-            IRecommendationRepository recommendationRepository)
+            IRecommendationRepository recommendationRepository,
+            ReferenceConverter referenceConverter)
         {
             this.associationRepository = associationRepository;
             this.recommendationRepository = recommendationRepository;
+            this.referenceConverter = referenceConverter;
         }
 
         /// <summary>
@@ -80,7 +89,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         public IEnumerable<ContentReference> GetRecommendations(ContentReference contentReference, int amount)
         {
             return this.recommendationRepository.GetFromCache(productId: contentReference.ID).OrderByDescending(p => p.Score)
-                .Take(count: amount).Select(p => new ContentReference(contentID: p.CoPurchaseProductId));
+                .Take(count: amount).Select(p => this.referenceConverter.GetEntryContentLink(p.CoPurchaseProductId));
         }
 
         /// <summary>
@@ -130,7 +139,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
                 this.recommendationRepository.GetFromCache(contentReferences.Select(r => r.ID)).ToList();
 
             return combinedRecommendations.OrderByDescending(p => p.Score).Take(count: amount)
-                .Select(p => new ContentReference(contentID: p.CoPurchaseProductId));
+                .Select(p => this.referenceConverter.GetEntryContentLink(p.CoPurchaseProductId));
         }
 
         /// <summary>
@@ -166,7 +175,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
                 this.recommendationRepository.GetFromCache(upsellItems.Select(r => r.ID)).ToList();
 
             return combinedRecommendations.OrderByDescending(i => i.Score).Take(count: amount)
-                .Select(p => new ContentReference(contentID: p.CoPurchaseProductId)).ToList();
+                .Select(p => this.referenceConverter.GetEntryContentLink(p.CoPurchaseProductId)).ToList();
         }
 
         /// <summary>

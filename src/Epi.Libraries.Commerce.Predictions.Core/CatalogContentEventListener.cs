@@ -153,20 +153,11 @@ namespace Epi.Libraries.Commerce.Predictions.Core
                     return;
                 }
 
-                IEnumerable<ContentReference> contentLinks = this.GetContentLinks(
-                    ids: deserializedEventArgs.CatalogEntryIds,
-                    type: CatalogContentType.CatalogEntry);
-
-                foreach (ContentReference contentReference in contentLinks)
+                foreach (int objectId in deserializedEventArgs.CatalogEntryIds)
                 {
-                    this.recommendationRepository.Delete(productId: contentReference.ID);
+                    this.recommendationRepository.Delete(productId: objectId);
                 }
             }
-        }
-
-        private IEnumerable<ContentReference> GetContentLinks(IEnumerable<int> ids, CatalogContentType type)
-        {
-            return ids.Select(x => this.referenceConverter.GetContentLink(objectId: x, contentType: type, 0));
         }
     }
 }
