@@ -286,14 +286,14 @@ namespace Epi.Libraries.Commerce.Predictions.Core
 
             foreach (IPurchaseOrder orderSearchResult in orders)
             {
-                IEnumerable<ILineItem> lineItems = orderSearchResult.Forms.FirstOrDefault().GetAllLineItems().ToList();
+                IEnumerable<ILineItem> lineItems = orderSearchResult.GetAllLineItems().ToList();
 
                 if (lineItems.Count() <= 1)
                 {
                     continue;
                 }
 
-                List<int> productIdList = (from lineItem in lineItems select lineItem.GetEntryContent() into content where content != null select this.referenceConverter.GetObjectId(content.ContentLink)).ToList();
+                List<int> productIdList = (from lineItem in lineItems select lineItem.GetEntryContent() into content where content != null select this.referenceConverter.GetObjectId(content.ContentLink)).Distinct().ToList();
 
                 foreach (int productId in productIdList)
                 {
