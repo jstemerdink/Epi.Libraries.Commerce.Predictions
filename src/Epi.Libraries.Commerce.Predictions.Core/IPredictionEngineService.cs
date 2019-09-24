@@ -25,11 +25,44 @@ namespace Epi.Libraries.Commerce.Predictions.Core
 {
     using System.Collections.Generic;
 
+    using EPiServer.Commerce.Catalog.ContentTypes;
     using EPiServer.Commerce.Order;
     using EPiServer.Core;
 
     public interface IPredictionEngineService
     {
+        /// <summary>
+        /// Gets the personalized recommendations.
+        /// </summary>
+        /// <param name="contentReference">The content reference.</param>
+        /// <returns>A list of <see cref="ContentReference" /> with 3 personalized recommendations for a variation.</returns>
+        IEnumerable<ContentReference> GetPersonalizedRecommendations(ContentReference contentReference);
+
+        /// <summary>
+        /// Gets the personalized recommendations.
+        /// </summary>
+        /// <param name="contentReference">The content reference.</param>
+        /// <param name="amount">The amount.</param>
+        /// <returns>A list of <see cref="ContentReference" /> with personalized recommendations for a variation.</returns>
+        IEnumerable<ContentReference> GetPersonalizedRecommendations(ContentReference contentReference, int amount);
+
+        /// <summary>
+        /// Gets the personalized recommendations.
+        /// </summary>
+        /// <typeparam name="T">The type of variation to get.</typeparam>
+        /// <param name="contentReference">The content reference.</param>
+        /// <returns>A list of <see cref="VariationContent" /> with personalized recommendations for a variation.</returns>
+        IEnumerable<T> GetPersonalizedRecommendations<T>(ContentReference contentReference) where T : VariationContent;
+
+        /// <summary>
+        /// Gets the personalized recommendations.
+        /// </summary>
+        /// <typeparam name="T">The type of variation to get.</typeparam>
+        /// <param name="contentReference">The content reference.</param>
+        /// <param name="amount">The amount.</param>
+        /// <returns>A list of <see cref="VariationContent" /> with personalized recommendations for a variation.</returns>
+        IEnumerable<T> GetPersonalizedRecommendations<T>(ContentReference contentReference, int amount) where T : VariationContent;
+
         /// <summary>
         /// Gets the recommendations.
         /// </summary>
@@ -48,9 +81,19 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <summary>
         /// Gets the recommendations.
         /// </summary>
-        /// <param name="contentReferences">The content references.</param>
-        /// <returns>A list of <see cref="ContentReference"/> with recommendations for list of variations.</returns>
-        IEnumerable<ContentReference> GetRecommendations(IEnumerable<ContentReference> contentReferences);
+        /// <typeparam name="T">The type of variation to get.</typeparam>
+        /// <param name="contentReference">The content reference.</param>
+        /// <returns>A list of <see cref="VariationContent" /> with recommendations for a variation.</returns>
+        IEnumerable<T> GetRecommendations<T>(ContentReference contentReference) where T : VariationContent;
+
+        /// <summary>
+        /// Gets the recommendations.
+        /// </summary>
+        /// <typeparam name="T">The type of variation to get.</typeparam>
+        /// <param name="contentReference">The content reference.</param>
+        /// <param name="amount">The amount.</param>
+        /// <returns>A list of <see cref="VariationContent" /> with recommendations for a variation.</returns>
+        IEnumerable<T> GetRecommendations<T>(ContentReference contentReference, int amount) where T : VariationContent;
 
         /// <summary>
         /// Gets the recommendations.
@@ -70,17 +113,60 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <summary>
         /// Gets the recommendations.
         /// </summary>
+        /// <typeparam name="T">The type of variation to get.</typeparam>
+        /// <param name="cart">The cart.</param>
+        /// <returns>A list of <see cref="VariationContent" /> with recommendations for a variation.</returns>
+        IEnumerable<T> GetRecommendations<T>(ICart cart) where T : VariationContent;
+
+        /// <summary>
+        /// Gets the recommendations.
+        /// </summary>
+        /// <typeparam name="T">The type of variation to get.</typeparam>
+        /// <param name="cart">The cart.</param>
+        /// <param name="amount">The amount.</param>
+        /// <returns>A list of <see cref="VariationContent" /> with recommendations for a variation.</returns>
+        IEnumerable<T> GetRecommendations<T>(ICart cart, int amount) where T : VariationContent;
+
+        /// <summary>
+        /// Gets the recommendations.
+        /// </summary>
+        /// <param name="contentReferences">The content references.</param>
+        /// <returns>A list of <see cref="ContentReference"/> with recommendations for list of variations.</returns>
+        IEnumerable<ContentReference> GetRecommendations(IEnumerable<ContentReference> contentReferences);
+
+        /// <summary>
+        /// Gets the recommendations.
+        /// </summary>
         /// <param name="contentReferences">The content references.</param>
         /// <param name="amount">The amount of items to return.</param>
         /// <returns>A list of <see cref="ContentReference"/> with recommendations for list of variations.</returns>
-        IEnumerable<ContentReference> GetRecommendations(IEnumerable<ContentReference> contentReferences, int amount);
+        IEnumerable<ContentReference> GetRecommendations(
+            IEnumerable<ContentReference> contentReferences,
+            int amount);
+
+        /// <summary>
+        /// Gets the recommendations.
+        /// </summary>
+        /// <typeparam name="T">The type of variation to get.</typeparam>
+        /// <param name="contentReferences">The content references.</param>
+        /// <returns>A list of <see cref="VariationContent" /> with recommendations for a variation.</returns>
+        IEnumerable<T> GetRecommendations<T>(IEnumerable<ContentReference> contentReferences) where T : VariationContent;
+
+        /// <summary>
+        /// Gets the recommendations.
+        /// </summary>
+        /// <typeparam name="T">The type of variation to get.</typeparam>
+        /// <param name="contentReferences">The content references.</param>
+        /// <param name="amount">The amount.</param>
+        /// <returns>A list of <see cref="VariationContent" /> with recommendations for a variation.</returns>
+        IEnumerable<T> GetRecommendations<T>(IEnumerable<ContentReference> contentReferences, int amount) where T : VariationContent;
 
         /// <summary>
         /// Gets up sell items.
         /// </summary>
         /// <param name="cart">The cart.</param>
         /// <returns>A list of <see cref="ContentReference"/> with the best scoring up-sell items.</returns>
-        List<ContentReference> GetUpSellItems(ICart cart);
+        IEnumerable<ContentReference> GetUpSellItems(ICart cart);
 
         /// <summary>
         /// Gets up sell items.
@@ -88,16 +174,28 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <param name="cart">The cart.</param>
         /// <param name="amount">The amount of items to return.</param>
         /// <returns>A list of <see cref="ContentReference"/> with the best scoring up-sell items.</returns>
-        List<ContentReference> GetUpSellItems(ICart cart, int amount);
+        IEnumerable<ContentReference> GetUpSellItems(ICart cart, int amount);
+
+        /// <summary>
+        /// Gets the recommendations.
+        /// </summary>
+        /// <typeparam name="T">The type of variation to get.</typeparam>
+        /// <param name="cart">The cart.</param>
+        /// <returns>A list of <see cref="VariationContent" /> with recommendations for a variation.</returns>
+        IEnumerable<T> GetUpSellItems<T>(ICart cart) where T : VariationContent;
+
+        /// <summary>
+        /// Gets the recommendations.
+        /// </summary>
+        /// <typeparam name="T">The type of variation to get.</typeparam>
+        /// <param name="cart">The cart.</param>
+        /// <param name="amount">The amount.</param>
+        /// <returns>A list of <see cref="VariationContent" /> with recommendations for a variation.</returns>
+        IEnumerable<T> GetUpSellItems<T>(ICart cart, int amount) where T : VariationContent;
 
         /// <summary>
         /// Initializes this instance.
         /// </summary>
         void Init();
-
-        /////// <summary>
-        /////// Updates the model.
-        /////// </summary>
-        ////void UpdateModel();
     }
 }
