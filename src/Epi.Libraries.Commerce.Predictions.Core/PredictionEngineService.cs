@@ -35,6 +35,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
     using EPiServer.Commerce.Order;
     using EPiServer.Core;
     using EPiServer.Filters;
+    using EPiServer.Framework.Cache;
     using EPiServer.Globalization;
     using EPiServer.Security;
 
@@ -88,6 +89,11 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         private readonly ReferenceConverter referenceConverter;
 
         /// <summary>
+        /// The synchronized object instance cache
+        /// </summary>
+        private readonly ISynchronizedObjectInstanceCache synchronizedObjectInstanceCache;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="PredictionEngineService" /> class.
         /// </summary>
         /// <param name="associationRepository">The association repository.</param>
@@ -98,6 +104,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <param name="filterPublished">The filter published.</param>
         /// <param name="contentLoader">The content loader.</param>
         /// <param name="languageResolver">The language resolver.</param>
+        /// <param name="synchronizedObjectInstanceCache">The synchronized object instance cache.</param>
         public PredictionEngineService(
             IAssociationRepository associationRepository,
             IRecommendationRepository recommendationRepository,
@@ -106,7 +113,8 @@ namespace Epi.Libraries.Commerce.Predictions.Core
             ICurrentMarket currentMarket,
             FilterPublished filterPublished,
             IContentLoader contentLoader,
-            LanguageResolver languageResolver)
+            LanguageResolver languageResolver,
+            ISynchronizedObjectInstanceCache synchronizedObjectInstanceCache)
         {
             this.associationRepository = associationRepository;
             this.recommendationRepository = recommendationRepository;
@@ -116,6 +124,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
             this.filterPublished = filterPublished;
             this.contentLoader = contentLoader;
             this.languageResolver = languageResolver;
+            this.synchronizedObjectInstanceCache = synchronizedObjectInstanceCache;
         }
 
         /// <summary>
@@ -146,13 +155,14 @@ namespace Epi.Libraries.Commerce.Predictions.Core
 
             List<int> productIdList = this.GetPersonalProductIds().ToList();
 
-            IEnumerable<IProductCoPurchasePrediction> personalRecommendations = this.recommendationRepository
-                .Get(productIds: productIdList).Where(
-                    productCoPurchasePrediction =>
-                        !productIdList.Contains(item: productCoPurchasePrediction.CoPurchaseProductId));
+            IEnumerable<IProductCoPurchasePrediction> personalRecommendations =
+                this.recommendationRepository.Get(productIds: productIdList)
+                    .Where(
+                        productCoPurchasePrediction => productCoPurchasePrediction.CoPurchaseProductId != currentProductId
+                                                       && !productIdList.Contains(item: productCoPurchasePrediction.CoPurchaseProductId));
 
             IEnumerable<IProductCoPurchasePrediction> joinedRecommendations =
-                productRecommendations.Concat(personalRecommendations);
+                productRecommendations.Concat(second: personalRecommendations);
 
             return joinedRecommendations.OrderByDescending(p => p.Score).Take(count: amount).Select(
                 p => this.referenceConverter.GetEntryContentLink(objectId: p.CoPurchaseProductId));
@@ -420,6 +430,16 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         }
 
         /// <summary>
+        /// Gets the user cache key.
+        /// </summary>
+        /// <param name="userGuid">The user unique identifier.</param>
+        /// <returns>The cache key for the user.</returns>
+        private static string GetUserCacheKey(Guid userGuid)
+        {
+            return "commerce-predictions-" + userGuid.ToString();
+        }
+
+        /// <summary>
         /// Gets the contents.
         /// </summary>
         /// <typeparam name="T">The type of content.</typeparam>
@@ -455,9 +475,17 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <returns>A list of object ids.</returns>
         private IEnumerable<int> GetPersonalProductIds()
         {
-            List<int> productIdList = new List<int>();
-
             Guid contactId = PrincipalInfo.CurrentPrincipal.GetContactId();
+            string userCacheKey = GetUserCacheKey(userGuid: contactId);
+            CacheEvictionPolicy cacheEvictionPolicy = new CacheEvictionPolicy(new TimeSpan(0, 5, 0), timeoutType: CacheTimeoutType.Absolute);
+            List<int> productIdList = this.synchronizedObjectInstanceCache.Get(key: userCacheKey) as List<int>;
+
+            if (productIdList != null)
+            {
+                return productIdList;
+            }
+
+            productIdList = new List<int>();
 
             List<IPurchaseOrder> purchaseOrders =
                 this.orderRepository.Load<IPurchaseOrder>(customerId: contactId).ToList();
@@ -466,14 +494,15 @@ namespace Epi.Libraries.Commerce.Predictions.Core
 
             if (productIdList.Any())
             {
+                this.synchronizedObjectInstanceCache.Insert(key: userCacheKey, productIdList.Distinct().ToList(), evictionPolicy: cacheEvictionPolicy);
                 return productIdList.Distinct();
             }
 
             // If there are no orders yet, look in cart and wish-lists
             List<ICart> carts = this.orderRepository.Load<ICart>(customerId: contactId).ToList();
-
             productIdList.AddRange(this.GetLineItemIds(orderGroups: carts));
 
+            this.synchronizedObjectInstanceCache.Insert(key: userCacheKey, productIdList.Distinct().ToList(), evictionPolicy: cacheEvictionPolicy);
             return productIdList.Distinct();
         }
 
