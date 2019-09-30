@@ -41,7 +41,17 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <summary>
         /// The prediction engine service
         /// </summary>
-        private IPredictionEngineService predictionEngineService;
+        private static IPredictionEngineService predictionEngineService;
+
+        /// <summary>
+        /// The catalog content event listener
+        /// </summary>
+        private static CatalogContentEventListener listener;
+
+        /// <summary>
+        /// Indicates whether the module has been initialized
+        /// </summary>
+        private static bool initialized;
 
         /// <summary>Configure the IoC container before initialization.</summary>
         /// <param name="context">The context on which the container can be accessed.</param>
@@ -50,6 +60,8 @@ namespace Epi.Libraries.Commerce.Predictions.Core
             IServiceConfigurationProvider services = context.Services;
 
             services.AddSingleton<IPredictionEngineService, PredictionEngineService>();
+
+            services.AddSingleton<CatalogContentEventListener, CatalogContentEventListener>();
         }
 
         /// <summary>Initializes the <see cref="IPredictionEngineService"/></summary>
@@ -57,9 +69,23 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// <exception cref="T:EPiServer.ServiceLocation.ActivationException">if there is are errors resolving the service instance.</exception>
         public void Initialize(InitializationEngine context)
         {
-            this.predictionEngineService = context.Locate.Advanced.GetInstance<IPredictionEngineService>();
+            if ((context == null) || (context.HostType != HostType.WebApplication))
+            {
+                return;
+            }
 
-            context.InitComplete += this.InitCompleteHandler;
+            if (initialized)
+            {
+                return;
+            }
+
+            predictionEngineService = context.Locate.Advanced.GetInstance<IPredictionEngineService>();
+            context.InitComplete += InitCompleteHandler;
+
+            listener = context.Locate.Advanced.GetInstance<CatalogContentEventListener>();
+            listener.AddEvent();
+
+            initialized = true;
         }
 
         /// <summary>
@@ -76,19 +102,26 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         /// </para></remarks>
         public void Uninitialize(InitializationEngine context)
         {
+            if (!initialized)
+            {
+                return;
+            }
+
+            listener.RemoveEvent();
+            initialized = false;
         }
 
         /// <summary>Initializes the complete handler.</summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void InitCompleteHandler(object sender, EventArgs e)
+        private static void InitCompleteHandler(object sender, EventArgs e)
         {
-            if (this.predictionEngineService == null)
+            if (predictionEngineService == null)
             {
                 return;
             }
 
-            this.predictionEngineService.Init();
+            predictionEngineService.Init();
         }
     }
 }

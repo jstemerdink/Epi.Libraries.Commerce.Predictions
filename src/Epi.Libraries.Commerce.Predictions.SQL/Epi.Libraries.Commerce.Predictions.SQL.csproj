@@ -4,15 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{2C02F02F-FE0D-4D5F-9D2F-8AC92CBEFBA1}</ProjectGuid>
+    <ProjectGuid>{366C0D40-BD8A-4549-A75A-6DF7EAF82373}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Epi.Libraries.Commerce.Predictions.DDS</RootNamespace>
-    <AssemblyName>Epi.Libraries.Commerce.Predictions.DDS</AssemblyName>
+    <RootNamespace>Epi.Libraries.Commerce.Predictions.SQL</RootNamespace>
+    <AssemblyName>Epi.Libraries.Commerce.Predictions.SQL</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -216,10 +215,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="RecommendationRepository.cs" />
     <Compile Include="Models\ProductCoPurchasePrediction.cs" />
-    <Compile Include="PredictionEngineInitializationModule.cs" />
+    <Compile Include="RecommendationRepositoryInitializationModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RecommendationRepository.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

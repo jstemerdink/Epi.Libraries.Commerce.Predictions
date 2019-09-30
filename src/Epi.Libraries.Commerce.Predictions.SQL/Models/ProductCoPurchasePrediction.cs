@@ -21,18 +21,14 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Epi.Libraries.Commerce.Predictions.DDS.Models
+namespace Epi.Libraries.Commerce.Predictions.SQL.Models
 {
     using Epi.Libraries.Commerce.Predictions.Core.Models;
-
-    using EPiServer.Data;
-    using EPiServer.Data.Dynamic;
 
     /// <summary>
     /// Class ProductCoPurchasePrediction.
     /// </summary>
-    [EPiServerDataStore(AutomaticallyCreateStore = true, AutomaticallyRemapStore = true)]
-    public class ProductCoPurchasePrediction : IProductCoPurchasePrediction, IDynamicData
+    public class ProductCoPurchasePrediction : IProductCoPurchasePrediction
     {
         /// <summary>
         /// Gets or sets the co purchase product identifier.
@@ -41,16 +37,9 @@ namespace Epi.Libraries.Commerce.Predictions.DDS.Models
         public int CoPurchaseProductId { get; set; }
 
         /// <summary>
-        /// Gets or sets the <see cref="T:EPiServer.Data.Identity" /> of the item
-        /// </summary>
-        /// <value>The identifier.</value>
-        public Identity Id { get; set; }
-
-        /// <summary>
         /// Gets or sets the product identifier.
         /// </summary>
         /// <value>The product identifier.</value>
-        [EPiServerDataIndex]
         public int ProductId { get; set; }
 
         /// <summary>

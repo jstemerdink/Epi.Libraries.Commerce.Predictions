@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="PredictionEngineInitializationModule.cs" company="Jeroen Stemerdink">
+// <copyright file="RecommendationRepositoryInitializationModule.cs" company="Jeroen Stemerdink">
 //      Copyright © 2019 Jeroen Stemerdink.
 //      Permission is hereby granted, free of charge, to any person obtaining a copy
 //      of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,10 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Epi.Libraries.Commerce.Predictions.EF
+namespace Epi.Libraries.Commerce.Predictions.SQL
 {
+    using System;
+
     using Epi.Libraries.Commerce.Predictions.Core;
 
     using EPiServer.Framework;
@@ -36,8 +38,10 @@ namespace Epi.Libraries.Commerce.Predictions.EF
     /// <seealso cref="EPiServer.ServiceLocation.IConfigurableModule" />
     [InitializableModule]
     [ModuleDependency(typeof(EPiServer.Commerce.Initialization.InitializationModule))]
-    public class PredictionEngineInitializationModule : IConfigurableModule
+    public class RecommendationRepositoryInitializationModule : IConfigurableModule
     {
+        private static IRecommendationRepository recommendationRepository;
+
         /// <summary>Configure the IoC container before initialization.</summary>
         /// <param name="context">The context on which the container can be accessed.</param>
         public void ConfigureContainer(ServiceConfigurationContext context)
@@ -51,6 +55,14 @@ namespace Epi.Libraries.Commerce.Predictions.EF
         /// <param name="context">The <see cref="InitializationEngine"/></param>
         public void Initialize(InitializationEngine context)
         {
+            if ((context == null) || (context.HostType != HostType.WebApplication))
+            {
+                return;
+            }
+
+            recommendationRepository = context.Locate.Advanced.GetInstance<IRecommendationRepository>();
+
+            context.InitComplete += InitCompleteHandler;
         }
 
         /// <summary>
@@ -67,6 +79,16 @@ namespace Epi.Libraries.Commerce.Predictions.EF
         /// </para></remarks>
         public void Uninitialize(InitializationEngine context)
         {
+        }
+
+        /// <summary>
+        /// Initializes the complete handler.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        private static void InitCompleteHandler(object sender, EventArgs e)
+        {
+            recommendationRepository.Initialize();
         }
     }
 }
