@@ -44,6 +44,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
     using Mediachase.Commerce.Catalog;
 
     using Microsoft.ML;
+    using Microsoft.ML.Data;
     using Microsoft.ML.Trainers;
 
     /// <summary>
@@ -353,7 +354,13 @@ namespace Epi.Libraries.Commerce.Predictions.Core
         private ITransformer LoadDataAndTrain(IEnumerable<ProductEntry> products)
         {
             // Read the trained data using TextLoader by defining the schema for reading the product co-purchase data-set
-            IDataView traindata = this.mlContext.Data.LoadFromEnumerable(data: products);
+            IDataView productData = this.mlContext.Data.LoadFromEnumerable(data: products);
+
+            DataOperationsCatalog.TrainTestData trainTestData = this.mlContext.Data.TrainTestSplit(productData, testFraction: 0.2, seed: 1);
+            IDataView trainDataView = trainTestData.TrainSet;
+            IDataView testDataView = trainTestData.TestSet;
+
+            IDataView cachedData = this.mlContext.Data.Cache(trainDataView);
 
             // Your data is already encoded so all you need to do is specify options for MatrixFactorizationTrainer with a few extra hyper parameters
             // LossFunction, Alpha, Lambda and a few others like K and C as shown below and call the trainer. 
@@ -369,7 +376,7 @@ namespace Epi.Libraries.Commerce.Predictions.Core
                                                                          .SquareLossOneClass,
                                                                  Alpha = 0.01,
                                                                  Lambda = 0.025,
-                                                                 ApproximationRank = 100,
+                                                                 ApproximationRank = 128,
                                                                  C = 0.00001
                                                              };
 
@@ -378,9 +385,14 @@ namespace Epi.Libraries.Commerce.Predictions.Core
                 .MatrixFactorization(options: options);
 
             // Train the model fitting to the DataSet
-            ITransformer model = est.Fit(input: traindata);
+            ITransformer trainedModel = est.Fit(input: cachedData);
 
-            return model;
+            IDataView predictions = trainedModel.Transform(testDataView);
+            RegressionMetrics metrics = this.mlContext.Regression.Evaluate(predictions);
+
+            this.log.Information($"The model evaluation metrics RootMeanSquaredError:{metrics.RootMeanSquaredError}, LossFunction:{metrics.LossFunction}, MeanAbsoluteError:{metrics.MeanAbsoluteError}, MeanSquaredError:{metrics.MeanSquaredError}");
+
+            return trainedModel;
         }
     }
 }
